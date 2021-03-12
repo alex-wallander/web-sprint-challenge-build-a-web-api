@@ -1,4 +1,5 @@
 // Write your "actions" router here!
+const e = require('express');
 const express = require('express');
 
 const router = express.Router();
@@ -6,10 +7,14 @@ const router = express.Router();
 const Action = require('./actions-model');
 
 router.get('/', (req, res) => {
-    Action.get(req.query)
+    const id = req.params.id
+    Action.get(id, req.query)
     .then(actions => {
-        console.log(actions)
-        res.status(200).json(actions)
+        if(!actions) {
+            res.status(404).json({ message: 'The action could not be found'})
+        } else {
+            res.status(200).json(actions)
+        }
     })
     .catch((err) => {
         res.status(500).json({ message: err.message })
@@ -33,7 +38,7 @@ router.get('/:id', (req, res) => {
 
 router.post('/', (req, res) => {
     const newAction = req.body
-    if(!newAction) {
+    if(!newAction.description || !newAction.notes) {
         res.status(400).json({ message: 'Please provide a body' })
     } else {
         Action.insert(req.body)
@@ -51,7 +56,7 @@ router.put('/:id', async (req, res) => {
     const changes = req.body
 
     try {
-        if(!changes) {
+        if(!changes.description || !changes.notes) {
             res.status(400).json({message: 'Please provide changes'})
         } else {
             const updatedAction = await Action.update(id, changes)
